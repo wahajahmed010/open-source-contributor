@@ -2,8 +2,8 @@
 
 Autonomous GitHub contribution agent for OpenClaw. Scouts small repositories, analyzes issues, writes fixes using AI, and submits PRs.
 
-**📦 ClawHub:** https://clawhub.ai/wahajahmed010/open-source-contributor  
-**🐙 GitHub:** https://github.com/wahajahmed010/open-source-contributor
+**ClawHub:** https://clawhub.ai/wahajahmed010/open-source-contributor  
+
 
 ## Overview
 
