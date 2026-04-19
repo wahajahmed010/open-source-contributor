@@ -12,6 +12,7 @@
     "kind": "script",
     "path": "scripts/contrib-pipeline.py"
   },
+  "postInstall": "python3 scripts/setup.py",
   "config": {
     "github_token": "",
     "max_repos_per_night": 3,
