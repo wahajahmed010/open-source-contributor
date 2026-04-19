@@ -200,6 +200,10 @@ mypy scripts/
 ruff check scripts/
 ```
 
+## Acknowledgments
+
+**Inspiration:** This skill was inspired by [Dreaming](https://clawhub.ai/briancolinger/dreaming) by briancolinger — a creative skill that uses quiet hours for freeform reflection. While Dreaming focuses on introspective journaling, open-source-contributor takes a similar "quiet hours automation" approach but directs it toward actionable, measurable contributions to the open-source community.
+
 ## License
 
 MIT © wahajahmed010
