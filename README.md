@@ -2,6 +2,9 @@
 
 Autonomous GitHub contribution agent for OpenClaw. Scouts small repositories, analyzes issues, writes fixes using AI, and submits PRs.
 
+**📦 ClawHub:** https://clawhub.ai/wahajahmed010/open-source-contributor  
+**🐙 GitHub:** https://github.com/wahajahmed010/open-source-contributor
+
 ## Overview
 
 This skill enables autonomous open-source contributions during quiet hours with **graduated complexity levels**:
@@ -39,10 +42,23 @@ Submitter-Agent → opens PR with disclosure
 
 ## Installation
 
+### Via ClawHub (Recommended)
+
+```bash
+# Install via ClawHub CLI
+clawhub install wahajahmed010/open-source-contributor
+
+# Or via OpenClaw
+openclaw skill install open-source-contributor
+```
+
+**ClawHub Page:** https://clawhub.ai/wahajahmed010/open-source-contributor
+
+### Via GitHub
+
 ```bash
 # Clone to OpenClaw skills directory
 cd ~/.openclaw/skills
-
 git clone https://github.com/wahajahmed010/open-source-contributor.git
 
 # Install dependencies
