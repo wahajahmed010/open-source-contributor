@@ -1,67 +1,42 @@
 {
   "name": "open-source-contributor",
-  "version": "1.0.0",
-  "description": "Autonomous GitHub contribution agent with graduated complexity levels",
+  "version": "2.0.0",
+  "description": "Autonomous GitHub contribution agent using subagent orchestration for intermediate-difficulty code fixes",
   "author": "wahajahmed010",
   "license": "MIT",
   "requirements": {
     "bins": ["git", "python3"],
-    "env": ["GITHUB_TOKEN"]
+    "skills": ["subagent-orchestration"]
   },
-  "entry": {
-    "kind": "script",
-    "path": "scripts/contrib-pipeline.py"
-  },
-  "postInstall": "python3 scripts/setup.py",
   "config": {
-    "github_token": "",
-    "max_repos_per_night": 3,
-    "complexity_level": 1,
-    "approval_threshold": 0.5,
-    "quiet_hours": {
-      "start": "23:00",
-      "end": "07:00"
-    },
-    "blocked_patterns": [
-      "auth",
-      "crypto",
-      "token",
-      "key",
-      "password",
-      "credential",
-      "secret"
-    ]
+    "github_token_path": "~/.openclaw/.github_token",
+    "min_stars": 1000,
+    "complexity": "intermediate",
+    "max_contributions_per_night": 3,
+    "languages": ["python", "javascript", "typescript", "go", "rust"],
+    "excluded_repos": [
+      "MemPalace/mempalace",
+      "simpler-grants-gov",
+      "code-charity/youtube",
+      "osslab-pku/gfi-bot",
+      "puppeteer/puppeteer",
+      "TwiN/gatus",
+      "dundee/gdu",
+      "FilipePS/Traduzir-paginas-web"
+    ],
+    "blocked_patterns": ["auth", "crypto", "token", "key", "password", "credential", "secret"]
   },
   "subagents": [
     {
-      "name": "Scout-Agent",
-      "description": "Finds GitHub repos with good first issues",
-      "model": "default"
+      "name": "Researcher",
+      "description": "Searches GitHub for intermediate issues, evaluates impact-to-effort ratio",
+      "type": "researcher",
+      "toolsAllow": ["ollama_web_fetch", "ollama_web_search"]
     },
     {
-      "name": "Analyzer-Agent",
-      "description": "Assesses scope understanding and complexity",
-      "model": "default"
-    },
-    {
-      "name": "Coder-Agent",
-      "description": "Writes code fixes",
-      "model": "qwen3-coder-next:cloud"
-    },
-    {
-      "name": "Tester-Agent",
-      "description": "Runs test suites",
-      "model": "default"
-    },
-    {
-      "name": "Reviewer-Agent",
-      "description": "Pre-flight checklist before PR",
-      "model": "default"
-    },
-    {
-      "name": "Submitter-Agent",
-      "description": "Opens PRs on GitHub",
-      "model": "default"
+      "name": "Worker",
+      "description": "Forks repo, implements fix, runs tests, creates PR",
+      "type": "worker"
     }
   ]
 }

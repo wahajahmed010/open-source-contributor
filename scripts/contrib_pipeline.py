@@ -13,10 +13,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Ensure lib is importable
-sys.path.insert(0, str(Path.home() / ".openclaw" / "lib"))
-from token_resolver import get_github_token_or_die, inject_into_env
-
 # Configuration
 WORKSPACE = Path.home() / '.openclaw' / 'workspace' / 'contrib-scout'
 LOGS_DIR = WORKSPACE / 'logs'
@@ -38,10 +34,9 @@ def log_activity(activity_type, data):
         f.write(json.dumps(entry) + '\n')
 
 def load_config():
-    """Load user configuration — token resolved centrally, never from env directly"""
-    token = get_github_token_or_die()
+    """Load user configuration"""
     default_config = {
-        "github_token": token,
+        "github_token": os.environ.get('GITHUB_TOKEN', ''),
         "max_repos_per_night": 3,
         "complexity_level": 1,
         "approval_threshold": 0.5,

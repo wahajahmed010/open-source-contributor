@@ -62,10 +62,10 @@ Output JSON array sorted by difficulty (1-4).
     # Step 2: For each candidate, spawn Analyzer
     # This would iterate through scout results
     
-    # Step 3: For approved candidates, spawn Coder with qwen3-coder-next:cloud
-    print("\n[3/6] Spawning Coder-Agent (qwen3-coder-next:cloud)...")
+    # Step 3: For approved candidates, spawn Coder with qwen3-coder:480b:cloud
+    print("\n[3/6] Spawning Coder-Agent (qwen3-coder:480b:cloud)...")
     coder_task = """
-You are Coder-Agent using qwen3-coder-next:cloud.
+You are Coder-Agent using qwen3-coder:480b:cloud.
 
 Read the issue description and repository code.
 Write a minimal fix that:
@@ -81,7 +81,7 @@ Output: Files modified and diff.
 """
     coder_job = spawn_subagent(
         task=coder_task,
-        model="qwen3-coder-next:cloud",
+        model="qwen3-coder:480b:cloud",
         label="Contrib-Coder",
         cwd=WORKSPACE / "repos" / "example-repo"
     )

@@ -31,7 +31,7 @@ Scout-Agent → finds candidates (5 max)
      ↓
 Analyzer-Agent → scope understanding + complexity check
      ↓
-Coder-Agent (qwen3-coder-next:cloud) → writes fix
+Coder-Agent (qwen3-coder:480b:cloud) → writes fix
      ↓
 Tester-Agent → validates fix
      ↓
