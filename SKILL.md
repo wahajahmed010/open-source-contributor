@@ -168,7 +168,7 @@ For the best issue from Phase 1, spawn a Worker agent to:
 
 For Level 3 fixes that are security-sensitive or architecturally complex, spawn a **Council of LLMs** before implementing:
 
-1. Spawn 3 parallel subagents: Strategos (kimi-k2.6), Analyticos (deepseek-v4-pro), Creativos (gemma4:31b)
+1. Spawn 3 parallel subagents: Strategos, Analyticos, Creativos (use your preferred models)
 2. Pass the issue context and proposed approach to each
 3. Synthesize their verdicts
 4. If consensus is "don't implement" or high risk → skip this issue, move to next candidate
@@ -224,13 +224,13 @@ Runs daily at midnight (Europe/Berlin). Uses the multi-agent orchestrator patter
 
 The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual work to specialized subagents:
 
-1. **Researcher agent** — `ollama/deepseek-v4-pro:cloud` with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]`
+1. **Researcher agent** with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]`
    - Finds 3 intermediate-difficulty issues from open source repos
    - Focus: documentation fixes, typo fixes, small bug fixes, test additions, config improvements
    - Requirements: repo 1000+ stars, issue labeled "good first issue" or "help wanted" or "bug", last activity <30 days
    - Returns: repo URL, issue URL, issue title, difficulty estimate, why it's a good fit
 
-2. **Worker agent** — `ollama/deepseek-v4-pro:cloud`
+2. **Worker agent**
    - Picks the best issue from Researcher results
    - Forks repo, implements fix, creates PR
    - Uses GitHub API (urllib + token at `~/.openclaw/.github_token`) for fork/PR
@@ -242,7 +242,7 @@ The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual w
 **CRITICAL RULES for cron execution:**
 - The orchestrator MUST use `sessions_spawn` for both phases — never do research or coding itself
 - Each subagent gets `runTimeoutSeconds: 900` and `lightContext: true`
-- Each subagent uses `model: ollama/deepseek-v4-pro:cloud`
+- Each subagent uses your preferred model (configure in OpenClaw settings)
 - The orchestrator waits for both phases to complete before returning the final report
 - Never use `sessions_yield` for intermediate status — only return the final consolidated report
 - If a subagent times out or fails, report what was accomplished and move on
