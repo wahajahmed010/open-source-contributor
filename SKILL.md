@@ -28,6 +28,7 @@ Do not contribute to repos we've already contributed to:
 - TwiN/gatus (already have PR #1644)
 - dundee/gdu (already have PR #558)
 - FilipePS/Traduzir-paginas-web (already have PR #1007)
+- tektoncd/pipeline (already have PR #9950)
 
 ---
 
