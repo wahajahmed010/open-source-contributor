@@ -214,7 +214,9 @@ Set the difficulty level in `~/.openclaw/workspace/contrib-scout/config.json`:
 - **Pre-fetch web content yourself** for Worker agents — they can't browse
 - **Keep task descriptions under 2000 words** — longer = context overflow
 - **Use `lightContext: true`** on all subagent spawns
-- **Scale timeouts with difficulty:** L1=600s, L2=900s, L3=1200s
+- **Researcher:** Use a fast model (e.g., `kimi-k2.6`) for web search and synthesis tasks
+**Worker:** Use a deep reasoning model (e.g., `deepseek-v4-pro`) for coding and implementation
+**Scale timeouts with difficulty:** L1=600s, L2=900s, L3=1200s
 - **Never force a contribution** — if no good fit, report "no suitable issues found"
 
 ## Cron Configuration
@@ -225,13 +227,13 @@ Runs daily at midnight (Europe/Berlin). Uses the multi-agent orchestrator patter
 
 The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual work to specialized subagents:
 
-1. **Researcher agent** with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]`
+1. **Researcher agent** with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]` — use a fast model like `kimi-k2.6` for search and synthesis
    - Finds 3 intermediate-difficulty issues from open source repos
    - Focus: documentation fixes, typo fixes, small bug fixes, test additions, config improvements
    - Requirements: repo 1000+ stars, issue labeled "good first issue" or "help wanted" or "bug", last activity <30 days
    - Returns: repo URL, issue URL, issue title, difficulty estimate, why it's a good fit
 
-2. **Worker agent**
+2. **Worker agent** — use a deep reasoning model like `deepseek-v4-pro` for coding and implementation
    - Picks the best issue from Researcher results
    - Forks repo, implements fix, creates PR
    - Uses GitHub API (urllib + token at `~/.openclaw/.github_token`) for fork/PR
@@ -243,7 +245,7 @@ The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual w
 **CRITICAL RULES for cron execution:**
 - The orchestrator MUST use `sessions_spawn` for both phases — never do research or coding itself
 - Each subagent gets `runTimeoutSeconds: 900` and `lightContext: true`
-- Each subagent uses your preferred model (configure in OpenClaw settings)
+- Each subagent gets your preferred model for its role (fast model for research, deep model for coding)
 - The orchestrator waits for both phases to complete before returning the final report
 - Never use `sessions_yield` for intermediate status — only return the final consolidated report
 - If a subagent times out or fails, report what was accomplished and move on
