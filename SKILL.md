@@ -29,6 +29,15 @@ Do not contribute to repos we've already contributed to:
 - dundee/gdu (already have PR #558)
 - FilipePS/Traduzir-paginas-web (already have PR #1007)
 - tektoncd/pipeline (already have PR #9950)
+- fleetdm/fleet
+- refined-github
+- napalm-automation/napalm (already have PR #2320)
+- huggingface/smolagents (already have PR #2255)
+- collective/icalendar (already have PR #1369)
+- go-git/go-git
+- sphinx-doc/sphinxcontrib-htmlhelp
+- prisma/prisma (already have PR #1 on fork)
+- BeanieODM/beanie (issue already fixed upstream)
 
 ---
 
@@ -214,8 +223,10 @@ Set the difficulty level in `~/.openclaw/workspace/contrib-scout/config.json`:
 - **Pre-fetch web content yourself** for Worker agents — they can't browse
 - **Keep task descriptions under 2000 words** — longer = context overflow
 - **Use `lightContext: true`** on all subagent spawns
-- **Researcher:** Use a fast model (e.g., `kimi-k2.6`) for web search and synthesis tasks
-**Worker:** Use a deep reasoning model (e.g., `deepseek-v4-pro`) for coding and implementation
+- **Researcher:** Use `glm-5.1` for web search and synthesis tasks
+**Worker:** Use `minimax-m2.7` for coding and implementation (fallback: `qwen3-coder:480b:cloud`)
+**Tester:** Use `qwen3-coder:480b:cloud` if Worker was `minimax-m2.7`, or `minimax-m2.7` if Worker was `qwen3-coder:480b:cloud`
+**Reviewer/Submitter:** Use `gemma4:31b` for pre-flight review and PR submission
 **Scale timeouts with difficulty:** L1=600s, L2=900s, L3=1200s
 - **Never force a contribution** — if no good fit, report "no suitable issues found"
 
@@ -227,13 +238,13 @@ Runs daily at midnight (Europe/Berlin). Uses the multi-agent orchestrator patter
 
 The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual work to specialized subagents:
 
-1. **Researcher agent** with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]` — use a fast model like `kimi-k2.6` for search and synthesis
+1. **Researcher agent** with `toolsAllow: ["ollama_web_fetch", "ollama_web_search"]` — use `glm-5.1` for search and synthesis
    - Finds 3 intermediate-difficulty issues from open source repos
    - Focus: documentation fixes, typo fixes, small bug fixes, test additions, config improvements
    - Requirements: repo 1000+ stars, issue labeled "good first issue" or "help wanted" or "bug", last activity <30 days
    - Returns: repo URL, issue URL, issue title, difficulty estimate, why it's a good fit
 
-2. **Worker agent** — use a deep reasoning model like `deepseek-v4-pro` for coding and implementation
+2. **Worker agent** — use `minimax-m2.7` for coding and implementation (if it fails/times out, respawn with `qwen3-coder:480b:cloud`)
    - Picks the best issue from Researcher results
    - Forks repo, implements fix, creates PR
    - Uses GitHub API (urllib + token at `~/.openclaw/.github_token`) for fork/PR
@@ -242,10 +253,24 @@ The cron agent (Buck/main agent) acts as **orchestrator** and delegates actual w
    - Tests fix locally before pushing
    - Returns: PR URL, repo name, issue number, summary of changes
 
+3. **Tester agent** — use `qwen3-coder:480b:cloud` if Worker was `minimax-m2.7`, or `minimax-m2.7` if Worker was `qwen3-coder:480b:cloud`
+   - Validates the fix by running the repo's existing test suite
+   - If tests fail, reports back specific failures for Worker to address
+   - Returns: pass/fail, test output summary, any issues found
+
+4. **Reviewer/Submitter agent** — use `gemma4:31b` for final review and PR submission
+   - Pre-flight checklist: code quality, security patterns, style consistency
+   - Creates the PR via GitHub API with proper description and AI disclosure
+   - Returns: final PR URL and submission confirmation
+
 **CRITICAL RULES for cron execution:**
 - The orchestrator MUST use `sessions_spawn` for both phases — never do research or coding itself
 - Each subagent gets `runTimeoutSeconds: 900` and `lightContext: true`
-- Each subagent gets your preferred model for its role (fast model for research, deep model for coding)
+- Each subagent gets the appropriate model for its role:
+  - Researcher: `glm-5.1`
+  - Worker: `minimax-m2.7` (fallback: `qwen3-coder:480b:cloud`)
+  - Tester: opposite model from Worker
+  - Reviewer/Submitter: `gemma4:31b`
 - The orchestrator waits for both phases to complete before returning the final report
 - Never use `sessions_yield` for intermediate status — only return the final consolidated report
 - If a subagent times out or fails, report what was accomplished and move on
