@@ -1,213 +1,185 @@
-# open-source-contributor
+# Open Source Contributor
 
-Autonomous GitHub contribution agent for OpenClaw. Scouts small repositories, analyzes issues, writes fixes using AI, and submits PRs.
+Autonomous GitHub contribution agent using the **Architect-Builder** pattern. The main agent handles all git/network I/O; subagents handle focused cognitive work only.
 
-**ClawHub:** https://clawhub.ai/wahajahmed010/open-source-contributor  
+**ClawHub:** https://clawhub.ai/skills/open-source-contributor
 
+## Why the Architect-Builder Pattern?
 
-## Overview
+Previous versions spawned subagents to do everything — clone repos, modify code, run tests, create PRs. This failed because:
+- Each tool call through cloud model proxies takes 5-58 seconds
+- 50+ tool calls = 12+ minutes of pure latency
+- Large repo clones eat the time budget
+- Subagents timed out before completing work
 
-This skill enables autonomous open-source contributions during quiet hours with **graduated complexity levels**:
-
-- **Level 1:** Typo/link fixes (3 repos/night)
-- **Level 2:** README/documentation (3 repos, >50% approval)
-- **Level 3:** Simple code fixes (2 repos, >70% approval)
-- **Level 4:** Moderate code (1 repo, >90% approval)
-
-## Safety Features
-
-- ✅ **Approval-based progression** — complexity increases only with positive track record
-- ✅ **Scope understanding requirement** — unclear issues are skipped
-- ✅ **Security pattern blocking** — auth/crypto/token files excluded
-- ✅ **Test validation** — must pass existing test suite
-- ✅ **AI disclosure** — every PR includes disclosure
-- ✅ **Auto-pause** — stops if rejection rate >30%
-- ✅ **Append-only logging** — full audit trail
-
-## Architecture
+The fix: **The main agent does all I/O. Subagents only do focused cognitive work on pre-staged content.**
 
 ```
-Scout-Agent → finds candidates (5 max)
-     ↓
-Analyzer-Agent → scope understanding + complexity check
-     ↓
-Coder-Agent (qwen3-coder:480b:cloud) → writes fix
-     ↓
-Tester-Agent → validates fix
-     ↓
-Reviewer-Agent → pre-flight checklist
-     ↓
-Submitter-Agent → opens PR with disclosure
+┌─────────────────────────────────────────────────────┐
+│  MAIN AGENT — The Architect & Builder                │
+│                                                       │
+│  Research → Stage → Delegate → Apply → Push         │
+│  (All git operations, GitHub API, file I/O)          │
+└─────────────────────────────────────────────────────┘
+              │
+              │ File contents pasted inline
+              ▼
+┌─────────────────────────────────────────────────────┐
+│  SUBAGENT — The Specialist (600s max)                 │
+│                                                       │
+│  Receives files + issue context → Returns code changes│
+│  (No git, no API calls, no web browsing)             │
+└─────────────────────────────────────────────────────┘
 ```
+
+## Difficulty Levels
+
+### Level 1: Easy — Warm-up Contributions
+- Single file, < 30 lines changed
+- Labels: `good first issue`, `help wanted`, `bug`
+- Stars: 500+, Age: 3-30 days
+
+### Level 2: Intermediate — Real Feature Work (Default)
+- Multi-file, 30-150 lines changed
+- Labels: `bug`, `feature`, `performance`, `enhancement`
+- Stars: 1,000+, Age: 7-60 days
+
+### Level 3: Advanced — Architecture & Deep Fixes
+- Multi-module, 100-500+ lines changed
+- Optional Council of LLMs review before implementing
+- Stars: 2,000+, Age: 7-90 days
+
+## API-First Approach
+
+For simple fixes (1-3 files), **skip `git clone` entirely** and use the GitHub API directly:
+
+1. Read files via `GET /repos/{owner}/{repo}/contents/{path}`
+2. Write changes via `PUT /repos/{owner}/{repo}/contents/{path}`
+3. Create PR via `POST /repos/{owner}/{repo}/pulls`
+
+This completes in 2-5 minutes instead of 15+.
+
+**Use API-first when:** Fix touches 1-3 files, no test suite needed, no complex branching.
+
+**Use clone when:** Fix touches 4+ files, needs local testing, or requires understanding project structure.
+
+## Pipeline
+
+### Phase 1: Research (Main Agent)
+Find suitable issues using GitHub Search API. Filter by difficulty level criteria, exclude already-contributed repos, verify no open PRs.
+
+### Phase 2: Stage (Main Agent)
+Fork repo via GitHub API. Shallow clone (`--depth 1`). Create branch. Read `CONTRIBUTING.md` and relevant source files. Identify files that need changes. Prepare a focused task for the subagent with all file contents pasted inline.
+
+### Phase 3: Implement (Subagent — 600s max)
+Spawn a specialist subagent that receives:
+- Full file contents (pasted inline, not file paths)
+- The issue description
+- Project style/lint requirements
+- A request for EXACT code changes
+
+The subagent returns the modified code. It does NOT clone repos, push code, or create PRs.
+
+### Phase 4: Apply & Push (Main Agent)
+Apply the subagent's changes. Run linters/tests. Fix any remaining issues. Commit, push, create PR via GitHub API.
+
+### Phase 4.5: Council Review (Level 3 only)
+For complex fixes, spawn a Council of LLMs before Phase 3. Three different models evaluate the approach from strategic, analytical, and creative perspectives.
+
+## Quality Standards
+
+- **Meaningful contributions only** — no typo fixes, no placeholder PRs
+- **Must pass CI/tests** where available
+- **Must reference the issue** it fixes
+- **Must disclose AI assistance**
+- **No emojis** in PR titles, descriptions, or comments — professional tone throughout
+
+## Configuration
+
+Store settings in `contrib-scout/config.json`:
+
+```json
+{
+  "difficulty_level": 2,
+  "github_token_path": "~/.openclaw/.github_token",
+  "max_contributions_per_night": 1,
+  "languages": ["python", "javascript", "typescript", "go", "rust"],
+  "excluded_repos": []
+}
+```
+
+### Council Models (Optional — Level 3 only)
+
+For Council of LLMs review, configure your preferred models in `~/.openclaw/council-config.json`:
+
+```json
+{
+  "council_models": [
+    "your-strategic-model",
+    "your-analytical-model",
+    "your-creative-model"
+  ],
+  "default_timeout": 900,
+  "max_tokens": 8192
+}
+```
+
+Choose models with different strengths — strategic, analytical, creative. The more diverse, the better.
 
 ## Installation
 
 ### Via ClawHub (Recommended)
 
 ```bash
-# Install via ClawHub CLI
-clawhub install wahajahmed010/open-source-contributor
-
-# Or via OpenClaw
-openclaw skill install open-source-contributor
+clawhub install open-source-contributor
+clawhub install subagent-orchestration
+clawhub install council-of-llms  # Optional, for Level 3
 ```
-
-**ClawHub Page:** https://clawhub.ai/wahajahmed010/open-source-contributor
 
 ### Via GitHub
 
 ```bash
-# Clone to OpenClaw skills directory
 cd ~/.openclaw/skills
 git clone https://github.com/wahajahmed010/open-source-contributor.git
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure
-export GITHUB_TOKEN="ghp_your_token_here"
-python3 open-source-contributor/scripts/setup.py
+git clone https://github.com/wahajahmed010/subagent-orchestration.git
+git clone https://github.com/wahajahmed010/council-of-llms.git  # Optional
 ```
 
-## Configuration
+### GitHub Token
 
-`~/.openclaw/workspace/contrib-scout/config.json`:
-
-```json
-{
-  "github_token": "ghp_xxxxxxxxxxxx",
-  "max_repos_per_night": 3,
-  "complexity_level": 1,
-  "approval_threshold": 0.5,
-  "quiet_hours": {
-    "start": "23:00",
-    "end": "07:00"
-  },
-  "blocked_patterns": [
-    "auth", "crypto", "token", "key",
-    "password", "credential", "secret"
-  ]
-}
-```
-
-## Usage
-
-### Manual Run
-
-```bash
-python3 ~/.openclaw/skills/open-source-contributor/scripts/contrib-pipeline.py
-```
-
-### Cron Schedule
-
-```bash
-# Run nightly at 23:00
-0 23 * * * cd ~/.openclaw/skills/open-source-contributor && python3 scripts/contrib-pipeline.py
-```
-
-### Check Status
-
-```bash
-# View recent activity
-tail -20 ~/.openclaw/workspace/contrib-scout/logs/contributions.jsonl
-
-# Check approval rate
-python3 ~/.openclaw/skills/open-source-contributor/scripts/stats.py
-```
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate new token (classic) with `public_repo` scope
+3. **Never** grant `repo` scope (includes private repos)
+4. Store at `~/.openclaw/.github_token`
 
 ## Requirements
 
-- Python 3.10+
+- OpenClaw with `sessions_spawn` capability
 - Git
+- Python 3.10+
 - GitHub Personal Access Token with `public_repo` scope
-- OpenClaw with sessions_spawn capability
 
-## GitHub Token Setup
+## What Changed in v3
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate new token (classic)
-3. Select scopes: `public_repo`
-4. **Never** grant `repo` scope (includes private repos)
-5. Copy token to `GITHUB_TOKEN` environment variable
+| Feature | v2 (Old) | v3 (Current) |
+|---------|----------|-------------|
+| Architecture | Subagent does everything | Architect-Builder: main agent does I/O, subagent does cognition |
+| Git operations | Subagent clones/pushes | Main agent handles all git |
+| API-first | No | Yes — skip clone for simple fixes |
+| Subagent timeout | 900-1200s | 600s max (focused work only) |
+| Council models | Hardcoded | User-configurable via `council-config.json` |
+| Difficulty levels | 4 levels with approval gates | 3 levels with clear criteria |
+| Emoji in PRs | Allowed | Forbidden — professional tone only |
 
-## Complexity Level Details
+## Companion Skills
 
-| Level | Examples | Max Repos | Approval Required |
-|-------|----------|-----------|-------------------|
-| 1 | Typo fixes, dead links, formatting | 3 | None |
-| 2 | README updates, doc improvements | 3 | >50% |
-| 3 | Simple code fixes (1-2 functions) | 2 | >70% |
-| 4 | Multi-file logic changes | 1 | >90% |
-
-## PR Template
-
-Every PR includes:
-
-```markdown
-## Description
-[Brief description of fix]
-
-## Changes
-- [Specific change 1]
-- [Specific change 2]
-
-## Testing
-- [ ] Tests pass (or N/A)
-
-## Disclosure
-This contribution was generated with AI assistance and reviewed before submission.
-```
-
-## Monitoring
-
-Track contributions:
-
-```bash
-# Daily summary
-python3 scripts/stats.py --today
-
-# Weekly report
-python3 scripts/stats.py --week
-
-# Check for paused status
-python3 scripts/status.py
-```
-
-## Troubleshooting
-
-**Pipeline paused?**
-- Check rejection rate: `cat logs/contributions.jsonl | grep rejected`
-- If rate >30%, system auto-pauses. Review recent PRs.
-
-**No candidates found?**
-- Scout searches for `good first issue` + `help wanted` labels
-- Try broadening language filter in config
-
-**Tests failing?**
-- Tester-Agent reports which tests failed
-- Review logs in `logs/contributions.jsonl`
-
-## Development
-
-```bash
-# Run tests
-pytest tests/
-
-# Type check
-mypy scripts/
-
-# Lint
-ruff check scripts/
-```
-
-## Acknowledgments
-
-**Inspiration:** This skill was inspired by [Dreaming](https://clawhub.ai/briancolinger/dreaming) by briancolinger — a creative skill that uses quiet hours for freeform reflection. While Dreaming focuses on introspective journaling, open-source-contributor takes a similar "quiet hours automation" approach but directs it toward actionable, measurable contributions to the open-source community.
+- **[Subagent Orchestration](https://github.com/wahajahmed010/subagent-orchestration)** — Required. Provides spawn patterns, timeout config, and sandbox constraints.
+- **[Council of LLMs](https://github.com/wahajahmed010/council-of-llms)** — Optional. For Level 3 complex decisions before implementing.
 
 ## License
 
-MIT © wahajahmed010
+MIT-0
 
 ## Disclaimer
 
-This tool makes commits under your GitHub identity. Review the safety features before use. You are responsible for all contributions made under your account.
+This tool makes commits under your GitHub identity. Review the quality standards before use. You are responsible for all contributions made under your account.
