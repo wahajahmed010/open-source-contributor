@@ -1,42 +1,18 @@
 {
   "name": "open-source-contributor",
-  "version": "2.0.0",
-  "description": "Autonomous GitHub contribution agent using subagent orchestration for intermediate-difficulty code fixes",
+  "version": "3.0.0",
+  "description": "Autonomous GitHub contribution agent using the Architect-Builder pattern. Main agent handles all I/O; subagents do focused cognitive work only. Supports three difficulty levels with API-first approach for simple fixes.",
   "author": "wahajahmed010",
-  "license": "MIT",
+  "license": "MIT-0",
   "requirements": {
     "bins": ["git", "python3"],
     "skills": ["subagent-orchestration"]
   },
   "config": {
     "github_token_path": "~/.openclaw/.github_token",
-    "min_stars": 1000,
-    "complexity": "intermediate",
-    "max_contributions_per_night": 3,
+    "difficulty_level": 2,
+    "max_contributions_per_night": 1,
     "languages": ["python", "javascript", "typescript", "go", "rust"],
-    "excluded_repos": [
-      "MemPalace/mempalace",
-      "simpler-grants-gov",
-      "code-charity/youtube",
-      "osslab-pku/gfi-bot",
-      "puppeteer/puppeteer",
-      "TwiN/gatus",
-      "dundee/gdu",
-      "FilipePS/Traduzir-paginas-web"
-    ],
-    "blocked_patterns": ["auth", "crypto", "token", "key", "password", "credential", "secret"]
-  },
-  "subagents": [
-    {
-      "name": "Researcher",
-      "description": "Searches GitHub for intermediate issues, evaluates impact-to-effort ratio",
-      "type": "researcher",
-      "toolsAllow": ["ollama_web_fetch", "ollama_web_search"]
-    },
-    {
-      "name": "Worker",
-      "description": "Forks repo, implements fix, runs tests, creates PR",
-      "type": "worker"
-    }
-  ]
+    "excluded_repos": []
+  }
 }
